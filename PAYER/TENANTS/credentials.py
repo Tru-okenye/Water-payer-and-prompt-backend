@@ -11,7 +11,7 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 def generate_access_token(api_key, api_secret):
     auth = HTTPBasicAuth(api_key, api_secret)
-    token_url = 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
+    token_url = ''
     
     try:
         response = requests.get(token_url, auth=auth)
