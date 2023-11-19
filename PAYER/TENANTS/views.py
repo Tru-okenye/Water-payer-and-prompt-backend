@@ -70,22 +70,12 @@ def authenticated_tenant_details(request, tenant_id):
 # payment handling 
 
 
-
 def initiate_payment(request, tenant_id):
-    url = ''
+    url = settings.ENDPOINT
     tenant = get_object_or_404(Tenant, pk=tenant_id)
-    # The phone number associated with the tenant
     phone_number = tenant.phone_number
-
-    # The amount to be paid
     amount = str(tenant.amount_due)
-
-    # Generate a unique reference ID for this transaction
     reference_id = f"PAYMENT_{tenant.id}"
-
-    # Callback URL where Safaricom will send the payment result
-    
-
     formatted_amount = int(tenant.amount_due * 100)  # convert to cents
     access_token = generate_access_token(settings.API_KEY, settings.API_SECRET)
 
@@ -94,24 +84,22 @@ def initiate_payment(request, tenant_id):
         'Password': generate_password(settings.API_KEY, settings.API_SECRET, reference_id),
         'Timestamp': generate_timestamp(),
         'TransactionType': 'CustomerBuyGoodsOnline',
-        'Amount': formatted_amount,  # Use the formatted amount
+        'Amount': formatted_amount,
         'PartyA': phone_number,
         'PartyB': settings.BUSINESS_SHORT_CODE,
         'PhoneNumber': phone_number,
-        'CallBackURL': '',
+        'CallBackURL': settings.CALLBACK_URL,
         'AccountReference': reference_id,
         'TransactionDesc': 'Water Bill Payment'
-            }
-  
+    }
 
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + access_token
     }
+    
     try:
-       
-        print(f"Access Token: {access_token}")
-        response = requests.post(settings.ENDPOINT, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers)
         if response.status_code == 200:
             print(f"API Key: {settings.API_KEY}")
             print(f"API Secret: {settings.API_SECRET}")
@@ -121,8 +109,6 @@ def initiate_payment(request, tenant_id):
         else:
             print(f"Error response from Safaricom: {response.text}")
             return JsonResponse({"error": "Failed to obtain access token"}, status=response.status_code)
-    # Handle the response from Safaricom and update your database accordingly
-    
 
         return JsonResponse({"message": "Payment initiation successful"})
     except Exception as e:
@@ -133,16 +119,11 @@ def initiate_payment(request, tenant_id):
 def check_payment_status(request, tenant_id):
     try:
         tenant = get_object_or_404(Tenant, pk=tenant_id)
-
         api_key = settings.API_KEY
         api_secret = settings.API_SECRET
         business_short_code = settings.BUSINESS_SHORT_CODE
         phone_number = tenant.phone_number
-
-        # Generate a unique reference ID for this transaction
         reference_id = f"PAYMENT_{tenant.id}"
-
-        #  API endpoint for checking payment status
         endpoint = settings.QUERY
 
         payload = {
@@ -160,8 +141,6 @@ def check_payment_status(request, tenant_id):
         response = requests.post(endpoint, json=payload, headers=headers)
 
         # Handle the response from Safaricom and update your database accordingly
-        
-
         return JsonResponse({"message": "Payment status checked successfully"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -169,25 +148,15 @@ def check_payment_status(request, tenant_id):
 @csrf_exempt
 def payment_callback(request):
     try:
-        # Handle the callback from Safaricom
-        # Update your database based on the payment result
-
-        # Use request.body to get the raw request data
         data = request.body.decode('utf-8')
-
-        # Check if the data is non-empty before parsing
         if not data:
             return JsonResponse({"error": "Empty callback data"}, status=400)
 
-        # Assume the data is in JSON format and parse it
         payload = json.loads(data)
-
-        # Access the 'AccountReference' from the payload
         account_reference = payload.get('AccountReference', None)
 
         if account_reference:
             tenant = get_object_or_404(Tenant, tenant_id=account_reference)
-            # Update the tenant's payment status 
             tenant.is_paid = True
             tenant.save()
             return JsonResponse({"message": "Payment callback received and processed"})

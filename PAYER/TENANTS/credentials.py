@@ -5,13 +5,20 @@ from datetime import datetime
 import base64
 import hashlib
 import logging
-from django.conf import settings
 
+from decouple import config  
 
 logger = logging.getLogger(__name__)
-def generate_access_token(api_key, api_secret):
-    auth = HTTPBasicAuth(api_key, api_secret)
-    token_url = ''
+
+# Load values from environment variables
+API_KEY = config('API_KEY')
+API_SECRET = config('API_SECRET')
+TOKEN_URL = config('TOKEN_URL')
+# ... (other variables)
+
+def generate_access_token():
+    auth = HTTPBasicAuth(API_KEY, API_SECRET)
+    token_url = TOKEN_URL
     
     try:
         response = requests.get(token_url, auth=auth)
@@ -30,20 +37,17 @@ def generate_access_token(api_key, api_secret):
         logger.error(f"Error decoding JSON during token generation: {str(e)}")
         raise  # Re-raise the exception to be handled at a higher level
 
-
-
-
-def generate_password(api_key, api_secret, reference_id):
-    # Generate  password
-
-
+def generate_password(reference_id):
+    # Generate password
     timestamp = generate_timestamp()
-    data = api_key + api_secret + timestamp + reference_id
+    data = API_KEY + API_SECRET + timestamp + reference_id
     password = base64.b64encode(hashlib.sha256(data.encode()).digest()).decode('utf-8')
 
     print(f"Generated Password: {password}") 
     return password
 
 def generate_timestamp():
-    # Generate  timestamp
+    # Generate timestamp
     return datetime.now().strftime("%Y%m%d%H%M%S")
+
+# ... (other functions)
