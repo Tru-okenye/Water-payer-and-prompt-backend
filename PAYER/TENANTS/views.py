@@ -13,7 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
 from django.shortcuts import get_object_or_404
-from .credentials import generate_access_token, generate_password, generate_timestamp, Credentials
+from .credentials import generate_access_token, generate_password, generate_timestamp
+from django.conf import settings
 
 # tenants records 
 class TenantViewSet(viewsets.ModelViewSet):
@@ -71,7 +72,7 @@ def authenticated_tenant_details(request, tenant_id):
 
 
 def initiate_payment(request, tenant_id):
-    url = 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
+    url = ''
     tenant = get_object_or_404(Tenant, pk=tenant_id)
     # The phone number associated with the tenant
     phone_number = tenant.phone_number
@@ -83,21 +84,21 @@ def initiate_payment(request, tenant_id):
     reference_id = f"PAYMENT_{tenant.id}"
 
     # Callback URL where Safaricom will send the payment result
-    callback_url = 'https://defd-102-68-79-183.ngrok-free.app/api/payment-callback/'
+    
 
     formatted_amount = int(tenant.amount_due * 100)  # convert to cents
-    access_token = generate_access_token(Credentials.api_key, Credentials.api_secret)
+    access_token = generate_access_token(settings.API_KEY, settings.API_SECRET)
 
     payload = {
-        'BusinessShortCode': Credentials.business_short_code,
-        'Password': generate_password(Credentials.api_key, Credentials.api_secret, reference_id),
+        'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
+        'Password': generate_password(settings.API_KEY, settings.API_SECRET, reference_id),
         'Timestamp': generate_timestamp(),
         'TransactionType': 'CustomerBuyGoodsOnline',
         'Amount': formatted_amount,  # Use the formatted amount
         'PartyA': phone_number,
-        'PartyB': Credentials.business_short_code,
+        'PartyB': settings.BUSINESS_SHORT_CODE,
         'PhoneNumber': phone_number,
-        'CallBackURL': callback_url,
+        'CallBackURL': '',
         'AccountReference': reference_id,
         'TransactionDesc': 'Water Bill Payment'
             }
@@ -110,10 +111,10 @@ def initiate_payment(request, tenant_id):
     try:
        
         print(f"Access Token: {access_token}")
-        response = requests.post(Credentials.endpoint, json=payload, headers=headers)
+        response = requests.post(settings.ENDPOINT, json=payload, headers=headers)
         if response.status_code == 200:
-            print(f"API Key: {Credentials.api_key}")
-            print(f"API Secret: {Credentials.api_secret}")
+            print(f"API Key: {settings.API_KEY}")
+            print(f"API Secret: {settings.API_SECRET}")
             print(f"Access Token: {access_token}")
             print(f"Token Response: {response.json()}")
             print(f"Amount: {formatted_amount}")
@@ -133,16 +134,16 @@ def check_payment_status(request, tenant_id):
     try:
         tenant = get_object_or_404(Tenant, pk=tenant_id)
 
-        api_key = Credentials.api_key
-        api_secret = Credentials.api_secret
-        business_short_code = Credentials.business_short_code
+        api_key = settings.API_KEY
+        api_secret = settings.API_SECRET
+        business_short_code = settings.BUSINESS_SHORT_CODE
         phone_number = tenant.phone_number
 
         # Generate a unique reference ID for this transaction
         reference_id = f"PAYMENT_{tenant.id}"
 
         #  API endpoint for checking payment status
-        endpoint = "https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query"
+        endpoint = settings.QUERY
 
         payload = {
             "BusinessShortCode": business_short_code,

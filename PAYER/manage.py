@@ -2,7 +2,11 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from dotenv import load_dotenv
 
+load_dotenv()
+project_folder = os.path.expanduser('~/PAYER')
+load_dotenv(os.path.join(project_folder, '.env'))
 
 def main():
     """Run administrative tasks."""

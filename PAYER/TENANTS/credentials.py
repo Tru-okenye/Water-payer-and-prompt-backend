@@ -5,19 +5,9 @@ from datetime import datetime
 import base64
 import hashlib
 import logging
+from django.conf import settings
 
 
-class Credentials:
-    api_key = 'lfPeIPhZ7KDHfyNCFILttArLsKhZv0Ma'
-    api_secret= 'Voqvlbj5qApy6YEK'
-    pass_key= 'fef66eba0f3f6485df404ac4980e3f49924cc8a8b3e6ef7dd6bbc238cdd0629c' 
-    endpoint = 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
-    business_short_code = '6437127'
-
-
-
-# CALLBACK_URL: 'https://lets-ride-fe42d9bf40d4.herokuapp.com/api/stkquery'
-# generate token
 logger = logging.getLogger(__name__)
 def generate_access_token(api_key, api_secret):
     auth = HTTPBasicAuth(api_key, api_secret)
