@@ -35,14 +35,14 @@ SECRET_KEY = 'django-insecure-tx5v84$1^th_3wf3d*dmm&81)6=!wakqrb1&m7-d96vx+7+ani
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [
-    'localhost',
-     '127.0.0.1',
-    'water-payer-37119e2b1a5e.herokuapp.com',  
+# ALLOWED_HOSTS = [
+#     'localhost',
+#      '127.0.0.1',
+#     'water-payer-37119e2b1a5e.herokuapp.com',  
     
-]
+# ]
 
-
+ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
@@ -108,7 +108,7 @@ WSGI_APPLICATION = 'PAYER.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'water_bill', 
         'USER': 'postgres',
         'PASSWORD': '@Truphy1.',  
