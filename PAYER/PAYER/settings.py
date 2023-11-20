@@ -33,7 +33,7 @@ STATIC_ROOT = 'staticfiles'
 SECRET_KEY = 'django-insecure-tx5v84$1^th_3wf3d*dmm&81)6=!wakqrb1&m7-d96vx+7+ani'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -107,10 +107,16 @@ WSGI_APPLICATION = 'PAYER.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'water_bill', 
+        'USER': 'postgres',
+        'PASSWORD': '@Truphy1.',  
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
+
 
 
 # Password validation
