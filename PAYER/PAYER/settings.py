@@ -23,6 +23,8 @@ TOKEN_URL = config('TOKEN_URL')
 BUSINESS_SHORT_CODE = config('BUSINESS_SHORT_CODE')
 QUERY = config('QUERY')
 
+STATIC_ROOT = 'staticfiles'
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
