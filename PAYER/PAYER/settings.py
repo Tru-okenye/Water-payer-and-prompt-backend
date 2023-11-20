@@ -30,7 +30,7 @@ QUERY = config('QUERY')
 SECRET_KEY = 'django-insecure-tx5v84$1^th_3wf3d*dmm&81)6=!wakqrb1&m7-d96vx+7+ani'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
