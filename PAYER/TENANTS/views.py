@@ -74,12 +74,11 @@ def initiate_payment(request, tenant_id):
     url = settings.ENDPOINT
     tenant = get_object_or_404(Tenant, pk=tenant_id)
     phone_number = tenant.phone_number
-    amount = str(tenant.amount_due)
     reference_id = f"PAYMENT_{tenant.id}"
     formatted_amount = int(tenant.amount_due * 100)  # convert to cents
     access_token = generate_access_token(settings.API_KEY, settings.API_SECRET)
 
-    payload = {
+    request = {
         'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
         'Password': generate_password(settings.API_KEY, settings.API_SECRET, reference_id),
         'Timestamp': generate_timestamp(),
@@ -88,7 +87,7 @@ def initiate_payment(request, tenant_id):
         'PartyA': phone_number,
         'PartyB': settings.BUSINESS_SHORT_CODE,
         'PhoneNumber': phone_number,
-        'CallBackURL': settings.CALLBACK_URL,
+        'CallBackURL': 'https://defd-102-68-79-183.ngrok-free.app/api/payment-callback/',
         'AccountReference': reference_id,
         'TransactionDesc': 'Water Bill Payment'
     }
@@ -99,7 +98,7 @@ def initiate_payment(request, tenant_id):
     }
     
     try:
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=request, headers=headers)
         if response.status_code == 200:
             print(f"API Key: {settings.API_KEY}")
             print(f"API Secret: {settings.API_SECRET}")

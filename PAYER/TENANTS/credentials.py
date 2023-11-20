@@ -16,7 +16,7 @@ API_SECRET = config('API_SECRET')
 TOKEN_URL = config('TOKEN_URL')
 # ... (other variables)
 
-def generate_access_token():
+def generate_access_token(API_KEY, API_SECRE):
     auth = HTTPBasicAuth(API_KEY, API_SECRET)
     token_url = TOKEN_URL
     
@@ -37,7 +37,7 @@ def generate_access_token():
         logger.error(f"Error decoding JSON during token generation: {str(e)}")
         raise  # Re-raise the exception to be handled at a higher level
 
-def generate_password(reference_id):
+def generate_password(API_KEY, API_SECRET, reference_id):
     # Generate password
     timestamp = generate_timestamp()
     data = API_KEY + API_SECRET + timestamp + reference_id
