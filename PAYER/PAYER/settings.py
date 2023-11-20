@@ -38,7 +38,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
      '127.0.0.1',
-    'https://water-payer-37119e2b1a5e.herokuapp.com/',  
+    'water-payer-37119e2b1a5e.herokuapp.com',  
     
 ]
 
