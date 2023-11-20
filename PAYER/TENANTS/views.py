@@ -87,7 +87,7 @@ def initiate_payment(request, tenant_id):
         'PartyA': phone_number,
         'PartyB': settings.BUSINESS_SHORT_CODE,
         'PhoneNumber': phone_number,
-        'CallBackURL': 'https://defd-102-68-79-183.ngrok-free.app/api/payment-callback/',
+        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',
         'AccountReference': reference_id,
         'TransactionDesc': 'Water Bill Payment'
     }

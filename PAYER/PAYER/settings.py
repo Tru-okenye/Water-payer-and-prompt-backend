@@ -37,8 +37,8 @@ SECRET_KEY = 'django-insecure-tx5v84$1^th_3wf3d*dmm&81)6=!wakqrb1&m7-d96vx+7+ani
 ALLOWED_HOSTS = [
     'localhost',
      '127.0.0.1',
-    'http://127.0.0.1:5173/',  # Add your local development server
-    'defd-102-68-79-183.ngrok-free.app',  # Add the ngrok URL
+    'http://127.0.0.1:5173/',  
+    
 ]
 
 
