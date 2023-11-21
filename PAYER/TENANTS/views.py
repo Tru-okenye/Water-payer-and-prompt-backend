@@ -11,7 +11,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from django.views.decorators.csrf import csrf_exempt
 import json
-import logging
+
 from django.shortcuts import get_object_or_404
 from .credentials import generate_access_token, generate_password, generate_timestamp
 from django.conf import settings
@@ -57,7 +57,7 @@ def authenticated_tenant_details(request, tenant_id):
                 'name': tenant.name,
                 'phone_number': tenant.phone_number,
                 'amount_due': tenant.amount_due,
-                # Add other fields you want to include
+               
             }
 
             return JsonResponse(data)

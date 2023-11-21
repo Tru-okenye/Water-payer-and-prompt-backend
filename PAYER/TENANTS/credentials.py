@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 API_KEY = config('API_KEY')
 API_SECRET = config('API_SECRET')
 TOKEN_URL = config('TOKEN_URL')
-# ... (other variables)
+
 
 def generate_access_token(API_KEY, API_SECRE):
     auth = HTTPBasicAuth(API_KEY, API_SECRET)
@@ -50,4 +50,4 @@ def generate_timestamp():
     # Generate timestamp
     return datetime.now().strftime("%Y%m%d%H%M%S")
 
-# ... (other functions)
+

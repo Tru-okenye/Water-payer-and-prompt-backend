@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from TENANTS.views import TenantViewSet, initiate_payment, check_payment_status, payment_callback, verify_login, authenticated_tenant_details
-from django.http import JsonResponse
+
 
 router = DefaultRouter()
 router.register(r'tenants', TenantViewSet, basename='tenant')

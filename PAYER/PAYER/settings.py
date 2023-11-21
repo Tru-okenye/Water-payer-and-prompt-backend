@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 from decouple import config
-import dj_database_url
+
 from pathlib import Path
 import os
+import django_heroku
+import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -35,14 +37,14 @@ SECRET_KEY = 'django-insecure-tx5v84$1^th_3wf3d*dmm&81)6=!wakqrb1&m7-d96vx+7+ani
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-# ALLOWED_HOSTS = [
-#     'localhost',
-#      '127.0.0.1',
-#     'water-payer-37119e2b1a5e.herokuapp.com',  
+ALLOWED_HOSTS = [
+    'localhost',
+     '127.0.0.1',
+    'water-payer-37119e2b1a5e.herokuapp.com',  
     
-# ]
+]
 
-ALLOWED_HOSTS = ['*']
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -109,10 +111,10 @@ WSGI_APPLICATION = 'PAYER.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'water_bill', 
-        'USER': 'postgres',
-        'PASSWORD': '@Truphy1.',  
-        'HOST': 'localhost',
+        'NAME': 'dbp11t8t1p5hhk', 
+        'USER': 'fhhmofjuejnwzi',
+        'PASSWORD': '9a9050726b850fa4286bb2185404d21853c17415ed927bbfc328bc9fc5764ad4',  
+        'HOST': 'ec2-3-232-218-211.compute-1.amazonaws.com',
         'PORT': '5432',
     }
 }
@@ -161,3 +163,5 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+django_heroku.settings(locals())
