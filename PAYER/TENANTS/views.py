@@ -76,7 +76,7 @@ def initiate_payment(request, tenant_id):
     phone_number = tenant.phone_number
     reference_id = f"PAYMENT_{tenant.id}"
     formatted_amount = int(tenant.amount_due * 100)  # convert to cents
-    access_token = generate_access_token(settings.API_KEY, settings.API_SECRET)
+    access_token = generate_access_token()
 
     request = {
         'BusinessShortCode': settings.BUSINESS_SHORT_CODE,

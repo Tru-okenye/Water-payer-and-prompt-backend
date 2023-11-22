@@ -16,12 +16,11 @@ API_SECRET = config('API_SECRET')
 TOKEN_URL = config('TOKEN_URL')
 
 
-def generate_access_token(API_KEY, API_SECRET):
+def generate_access_token():
     auth = HTTPBasicAuth(API_KEY, API_SECRET)
-    token_url = TOKEN_URL
     
     try:
-        response = requests.get(token_url, auth=auth)
+        response = requests.get(TOKEN_URL, auth=auth)
         response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
 
         access_token = response.json().get("access_token")
@@ -30,12 +29,13 @@ def generate_access_token(API_KEY, API_SECRET):
     except requests.exceptions.RequestException as e:
         # Log the error for debugging
         logger.error(f"Error during token generation: {str(e)}")
-        raise  # Re-raise the exception to be handled at a higher level
+        return None
 
     except json.JSONDecodeError as e:
         # Log the error for debugging
         logger.error(f"Error decoding JSON during token generation: {str(e)}")
-        raise  # Re-raise the exception to be handled at a higher level
+        return None
+
 
 def generate_password(API_KEY, API_SECRET, reference_id):
     # Generate password
