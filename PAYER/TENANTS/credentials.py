@@ -16,7 +16,7 @@ API_SECRET = config('API_SECRET')
 TOKEN_URL = config('TOKEN_URL')
 
 
-def generate_access_token(API_KEY, API_SECRE):
+def generate_access_token(API_KEY, API_SECRET):
     auth = HTTPBasicAuth(API_KEY, API_SECRET)
     token_url = TOKEN_URL
     
