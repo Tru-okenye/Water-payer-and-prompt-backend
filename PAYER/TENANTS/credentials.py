@@ -20,6 +20,7 @@ def generate_access_token():
     auth = HTTPBasicAuth(API_KEY, API_SECRET)
     
     try:
+        print("Token URL:", TOKEN_URL)  # Add this line for debugging
         response = requests.get(TOKEN_URL, auth=auth)
         response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
 
@@ -35,6 +36,7 @@ def generate_access_token():
         # Log the error for debugging
         logger.error(f"Error decoding JSON during token generation: {str(e)}")
         return None
+
 
 
 def generate_password(API_KEY, API_SECRET, reference_id):
