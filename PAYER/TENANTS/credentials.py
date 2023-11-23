@@ -18,11 +18,13 @@ TOKEN_URL = config('TOKEN_URL')
 def generate_access_token():
     # Make the request to the token URL using client credentials
     auth = HTTPBasicAuth(API_KEY, API_SECRET)
-    
+    data = {'grant_type': 'client_credentials'}  # Include the grant_type parameter
+
     try:
         response = requests.post(
             TOKEN_URL,
-            auth=auth
+            auth=auth,
+            data=data
         )
         response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
 
