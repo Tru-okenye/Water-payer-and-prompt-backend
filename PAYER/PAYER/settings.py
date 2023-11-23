@@ -22,7 +22,7 @@ API_KEY = config('API_KEY')
 API_SECRET = config('API_SECRET')
 PASS_KEY = config('PASS_KEY')
 ENDPOINT = config('ENDPOINT')
-TOKEN_URL = os.environ.get('TOKEN_URL')
+TOKEN_URL = config('TOKEN_URL')
 BUSINESS_SHORT_CODE = config('BUSINESS_SHORT_CODE')
 QUERY = config('QUERY')
 
