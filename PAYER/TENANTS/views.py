@@ -10,10 +10,11 @@ from django.http import JsonResponse
 import requests
 from requests.auth import HTTPBasicAuth
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, HttpResponse
 import json
 
 from django.shortcuts import get_object_or_404
-from .credentials import generate_access_token, generate_password, generate_timestamp
+from .credentials import generate_access_token, generate_password, generate_timestamp, MpesaAccessToken
 from django.conf import settings
 
 # tenants records 
@@ -68,53 +69,77 @@ def authenticated_tenant_details(request, tenant_id):
 
 
 # payment handling 
-
-
 def initiate_payment(request, tenant_id):
-    url = settings.ENDPOINT
-    tenant = get_object_or_404(Tenant, pk=tenant_id)
-    phone_number = tenant.phone_number
-    reference_id = f"PAYMENT_{tenant.id}"
-    formatted_amount = int(tenant.amount_due * 100)  # convert to cents
-    access_token = generate_access_token()
+    if request.method == 'POST':
+        url = settings.ENDPOINT
+        tenant = get_object_or_404(Tenant, pk=tenant_id)
+        phone_number = tenant.phone_number
+        reference_id = f"PAYMENT_{tenant.id}"
+        formatted_amount = int(tenant.amount_due * 100)  # convert to cents
+        access_token = MpesaAccessToken.validated_access_token
+        api_url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
+        headers = {"Authorization": "Bearer %s" % access_token}
+        request = {
+                   'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
+                    'Password': generate_password(settings.API_KEY, settings.API_SECRET, reference_id),
+                    'Timestamp': generate_timestamp(),
+                    'TransactionType': 'CustomerPayBillOnline',
+                    'Amount': formatted_amount,
+                    'PartyA': phone_number,
+                    'PartyB': settings.BUSINESS_SHORT_CODE,
+                    'PhoneNumber': phone_number,
+                    'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',
+                    'AccountReference': reference_id,
+                    'TransactionDesc': 'Water Bill Payment'
+                }
+        response = requests.post(api_url, json=request, headers=headers)
+    return HttpResponse("success")
 
-    request = {
-        'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
-        'Password': generate_password(settings.API_KEY, settings.API_SECRET, reference_id),
-        'Timestamp': generate_timestamp(),
-        'TransactionType': 'CustomerPayBillOnline',
-        'Amount': formatted_amount,
-        'PartyA': phone_number,
-        'PartyB': settings.BUSINESS_SHORT_CODE,
-        'PhoneNumber': phone_number,
-        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',
-        'AccountReference': reference_id,
-        'TransactionDesc': 'Water Bill Payment'
-    }
+# def initiate_payment(request, tenant_id):
+#     url = settings.ENDPOINT
+#     tenant = get_object_or_404(Tenant, pk=tenant_id)
+#     phone_number = tenant.phone_number
+#     reference_id = f"PAYMENT_{tenant.id}"
+#     formatted_amount = int(tenant.amount_due * 100)  # convert to cents
+#     access_token = generate_access_token()
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + access_token
-    }
+#     request = {
+#         'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
+#         'Password': generate_password(settings.API_KEY, settings.API_SECRET, reference_id),
+#         'Timestamp': generate_timestamp(),
+#         'TransactionType': 'CustomerPayBillOnline',
+#         'Amount': formatted_amount,
+#         'PartyA': phone_number,
+#         'PartyB': settings.BUSINESS_SHORT_CODE,
+#         'PhoneNumber': phone_number,
+#         'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',
+#         'AccountReference': reference_id,
+#         'TransactionDesc': 'Water Bill Payment'
+#     }
+
+#     headers = {
+#         "Content-Type": "application/json",
+#         "Authorization": "Bearer " + access_token
+#     }
     
-    try:
-        response = requests.post(url, json=request, headers=headers)
-        print("Request Payload:", request)
-        print("Response Status Code:", response.status_code)
-        if response.status_code == 200:
-            print(f"API Key: {settings.API_KEY}")
-            print(f"API Secret: {settings.API_SECRET}")
-            print(f"Access Token: {access_token}")
-            print(f"Token Response: {response.json()}")
-            print(f"Amount: {formatted_amount}")
-        else:
-            print(f"Error response from Safaricom: {response.text}")
-            return JsonResponse({"error": "Failed to obtain access token"}, status=response.status_code)
+#     try:
+#         response = requests.post(url, json=request, headers=headers)
+#         print("Request Payload:", request)
+#         print("Response Status Code:", response.status_code)
+#         if response.status_code == 200:
+#             print(f"API Key: {settings.API_KEY}")
+#             print(f"API Secret: {settings.API_SECRET}")
+#             print(f"Access Token: {access_token}")
+#             print(f"Token Response: {response.json()}")
+#             print(f"Amount: {formatted_amount}")
+#         else:
+#             print(f"Error response from Safaricom: {response.text}")
+#             return JsonResponse({"error": "Failed to obtain access token"}, status=response.status_code)
 
-        return JsonResponse({"message": "Payment initiation successful"})
-    except Exception as e:
-        print(f"Error during payment initiation: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500)
+#         return JsonResponse({"message": "Payment initiation successful"})
+#     except Exception as e:
+#         print(f"Error during payment initiation: {str(e)}")
+#         return JsonResponse({"error": str(e)}, status=500)
 
 @api_view(['GET'])
 def check_payment_status(request, tenant_id):
