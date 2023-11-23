@@ -16,6 +16,7 @@ API_SECRET = config('API_SECRET')
 
 
 
+
 def generate_access_token():
     # Make the request to the token URL using client credentials
     auth = HTTPBasicAuth(settings.API_KEY, settings.API_SECRET)
@@ -38,6 +39,7 @@ def generate_access_token():
     except requests.exceptions.RequestException as e:
         # Log the error for debugging
         print(f"Error during token generation: {str(e)}")
+        print(f"Response content: {res.text}") 
         return None
 
     except ValueError as e:
@@ -53,10 +55,10 @@ def generate_access_token():
 
 
 
-def generate_password(API_KEY, API_SECRET, reference_id):
+def generate_password(API_KEY, API_SECRET, refrence_id):
     # Generate password
     timestamp = generate_timestamp()
-    data = API_KEY + API_SECRET + timestamp + reference_id
+    data = API_KEY + API_SECRET + timestamp + refrence_id
     password = base64.b64encode(hashlib.sha256(data.encode()).digest()).decode('utf-8')
 
     print(f"Generated Password: {password}") 
