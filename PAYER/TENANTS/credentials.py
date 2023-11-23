@@ -20,7 +20,7 @@ def generate_access_token():
     # Make the request to the token URL using client credentials
     auth = HTTPBasicAuth(settings.API_KEY, settings.API_SECRET)
     data = {'grant_type': 'client_credentials'}  # Include the grant_type parameter
-    print("Before requests.post")
+    print("Token URL:", settings.TOKEN_URL)
     try:
         response = requests.post(
             settings.TOKEN_URL,
