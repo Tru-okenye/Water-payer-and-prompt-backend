@@ -4,12 +4,13 @@
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Tenant
-from .serializers import TenantSerializer
+from .models import Tenant, PaymentTransaction
+from .serializers import TenantSerializer, PaymentTransactionSerializer
 from django.http import JsonResponse
 import requests
 from requests.auth import HTTPBasicAuth
 from django.views.decorators.csrf import csrf_exempt
+from requests.exceptions import RequestException, HTTPError
 
 import json
 
@@ -21,6 +22,7 @@ from django.conf import settings
 class TenantViewSet(viewsets.ModelViewSet):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
+
   
 @csrf_exempt
 def verify_login(request):
@@ -91,7 +93,7 @@ def initiate_payment(request, tenant_id):
         'PartyA': phone_number,
         'PartyB': settings.BUSINESS_SHORT_CODE,
         'PhoneNumber': phone_number,
-        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',
+        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/check-payment-status/',
         'AccountReference': reference_id,
         'TransactionDesc': 'Water Bill Payment'
     }
@@ -105,71 +107,101 @@ def initiate_payment(request, tenant_id):
         response = requests.post(url, json=request, headers=headers)
         print("Request Payload:", request)
         print("Response Status Code:", response.status_code)
-        print("Response Text:", response.text) 
+        print("Response Text:", response.text)
+
         if response.status_code == 200:
             print(f"API Key: {settings.API_KEY}")
             print(f"API Secret: {settings.API_SECRET}")
             print(f"Access Token: {access_token}")
             print(f"Token Response: {response.json()}")
             print(f"Amount: {formatted_amount}")
+
+            stk_data = response.json()
+            response_code = stk_data.get('ResponseCode')
+            payment_transaction = PaymentTransaction.objects.create(
+                tenant_id=tenant.id,
+                checkout_request_id=stk_data.get('CheckoutRequestID'),
+                # Other fields you may want to save
+            )
+            
+            print(f"Checkout Request ID: {stk_data.get('CheckoutRequestID')}")
+
+            if response_code == '0':
+                # STK push was successful, respond with success and the CheckoutRequestID
+                response_data = {
+                     "status": "success",
+                     "checkoutRequestID": stk_data['CheckoutRequestID'],
+                     "payment_transaction_id": payment_transaction.id, 
+                     "created_at": payment_transaction.created_at
+                }
+                return JsonResponse(response_data)
+            
+            else:
+                # STK push failed, respond with error message and the ResponseDescription
+                return JsonResponse({"status": "error", "error": stk_data['ResponseDescription']})
+        elif response.status_code == 400 or response.status_code == 500:
+            stk_data = response.json()
+            return JsonResponse({"status": "error", "error": stk_data})
         else:
-            print(f"Error response from Safaricom: {response.text}")
-            return JsonResponse({"error": "Failed to obtain access token"}, status=response.status_code)
+            return JsonResponse({"status": "error", "error": f"Invalid response {response.text} received."})
 
-        return JsonResponse({"message": "Payment initiation successful"})
-    except Exception as e:
-        print(f"Error during payment initiation: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500)
-
-@api_view(['GET'])
-def check_payment_status(request, tenant_id):
+    except requests.exceptions.RequestException as e:
+        # Handle any exceptions or errors here
+        response_data = {"status": "error", "error": f"Failed to initiate payment: {str(e)}"}
+        return JsonResponse(response_data, status=500)
+    
+def check_payment_status(request, checkout_request_id):
     try:
-        tenant = get_object_or_404(Tenant, pk=tenant_id)
-        api_key = settings.API_KEY
-        api_secret = settings.API_SECRET
-        business_short_code = settings.BUSINESS_SHORT_CODE
-        phone_number = tenant.phone_number
-        reference_id = f"PAYMENT_{tenant.id}"
-        endpoint = settings.QUERY
+        url = settings.QUERY
+        timestamp = generate_timestamp()
+        business_short_code = settings.MPESA_SHORTCODE
+        pass_key = settings.MPESA_PASSKEY
+        password = generate_password()
 
         payload = {
             "BusinessShortCode": business_short_code,
-            "Password": generate_password(api_key, api_secret, reference_id),
-            "Timestamp": generate_timestamp(),
-            "CheckoutRequestID": reference_id,
+            "Password": password,
+            "Timestamp": timestamp,
+            "CheckoutRequestID": checkout_request_id
         }
 
         headers = {
-            "Authorization": "Bearer " + generate_access_token(api_key, api_secret),
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + generate_access_token() 
         }
 
-        response = requests.post(endpoint, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()  # Raises HTTPError for bad responses
 
-        # Handle the response from Safaricom and update your database accordingly
-        return JsonResponse({"message": "Payment status checked successfully"})
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        # Handle the response from Safaricom
+        data = response.json()
+        result_code = data.get("ResultCode")
 
-@csrf_exempt
-def payment_callback(request):
-    try:
-        data = request.body.decode('utf-8')
-        if not data:
-            return JsonResponse({"error": "Empty callback data"}, status=400)
-
-        payload = json.loads(data)
-        account_reference = payload.get('AccountReference', None)
-
-        if account_reference:
-            tenant = get_object_or_404(Tenant, tenant_id=account_reference)
+        if result_code == 0:  # Success
+            tenant_id = int(checkout_request_id.split("_")[1])
+            tenant = Tenant.objects.get(id=tenant_id)
             tenant.is_paid = True
             tenant.save()
-            return JsonResponse({"message": "Payment callback received and processed"})
+            return JsonResponse({"status": "success", "data": data})
         else:
-            return JsonResponse({"error": "Invalid callback data"}, status=400)
+            return JsonResponse({"status": "error", "data": data})
 
-    except json.JSONDecodeError as e:
-        return JsonResponse({"error": f"Error decoding JSON: {str(e)}"}, status=400)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    except HTTPError as e:
+        # Handle HTTP errors
+        response_data = {"status": "error", "data": f"HTTP error: {str(e)}"}
+        return JsonResponse(response_data, status=response.status_code)
+    except RequestException as e:
+        # Handle other request exceptions
+        response_data = {"status": "error", "data": f"Request error: {str(e)}"}
+        return JsonResponse(response_data, status=500)
+@api_view(['GET'])
+def get_payment_transactions(request):
+    # Retrieve all payment transactions from the database
+    transactions = PaymentTransaction.objects.all()
+
+    # Serialize the queryset using the serializer
+    serializer = PaymentTransactionSerializer(transactions, many=True)
+
+    # Return the serialized data as JSON response
+    return Response(serializer.data)
+

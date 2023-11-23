@@ -48,13 +48,6 @@ def generate_access_token():
         return None
 
 
-        
-       
-
- 
-
-
-
 def generate_password():
     # Generate password
     timestamp = generate_timestamp()
