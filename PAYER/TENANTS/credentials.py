@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Load values from environment variables
 API_KEY = config('API_KEY')
 API_SECRET = config('API_SECRET')
-TOKEN_URL = config('TOKEN_URL')
+
 
 
 def generate_access_token():
