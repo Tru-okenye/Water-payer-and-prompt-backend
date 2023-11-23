@@ -101,7 +101,7 @@ def initiate_payment(request, tenant_id):
     }
     
     try:
-        response = request.post(url, json=request, headers=headers)
+        response = requests.post(url, json=request, headers=headers)
         print("Request Payload:", request)
         print("Response Status Code:", response.status_code)
         print("Response Text:", response.text) 
