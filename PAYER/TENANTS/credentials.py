@@ -15,35 +15,33 @@ API_KEY = config('API_KEY')
 API_SECRET = config('API_SECRET')
 TOKEN_URL = config('TOKEN_URL')
 
-
 def generate_access_token():
     # Load API keys from the environment file
     api_key = config('API_KEY')
     api_secret = config('API_SECRET')
     token_url = config('TOKEN_URL')
 
-    # Set up the data for the token request
-    data = {
-        'grant_type': 'client_credentials',
-    }
-
     # Make the request to the token URL using client credentials
+    auth = HTTPBasicAuth(api_key, api_secret)
     
-    print("Before request.post")
-    response = requests.post(
-        token_url,
-        auth=HTTPBasicAuth(api_key, api_secret),
-        data=data
-    )
-    print("After request.post")
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # Parse the JSON response and extract the access token
-        access_token = response.json().get('access_token')
+    try:
+        response = requests.get(
+            token_url,
+            auth=auth
+        )
+        response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
+
+        access_token = response.json().get("access_token")
         return access_token
-    else:
-        # If the request was not successful, print an error message
-        print(f"Error generating access token: {response.status_code} - {response.text}")
+
+    except requests.exceptions.RequestException as e:
+        # Log the error for debugging
+        print(f"Error during token generation: {str(e)}")
+        return None
+
+    except ValueError as e:
+        # Log the error for debugging
+        print(f"Error decoding JSON during token generation: {str(e)}")
         return None
 
 
