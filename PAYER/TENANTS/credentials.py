@@ -28,12 +28,14 @@ def generate_access_token():
     }
 
     # Make the request to the token URL using client credentials
+    
+    print("Before request.post")
     response = requests.post(
         token_url,
         auth=HTTPBasicAuth(api_key, api_secret),
         data=data
     )
-
+    print("After request.post")
     # Check if the request was successful (status code 200)
     if response.status_code == 200:
         # Parse the JSON response and extract the access token
