@@ -1,5 +1,5 @@
 import requests
-import json
+from django.conf import settings
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 import base64
@@ -18,12 +18,12 @@ TOKEN_URL = config('TOKEN_URL')
 
 def generate_access_token():
     # Make the request to the token URL using client credentials
-    auth = HTTPBasicAuth(API_KEY, API_SECRET)
+    auth = HTTPBasicAuth(settings.API_KEY, settings.API_SECRET)
     data = {'grant_type': 'client_credentials'}  # Include the grant_type parameter
 
     try:
         response = requests.post(
-            TOKEN_URL,
+            settings.TOKEN_URL,
             auth=auth,
             data=data
         )
@@ -46,6 +46,8 @@ def generate_access_token():
         # Log the error for debugging
         print(f"Error decoding JSON during token generation: {str(e)}")
         return None
+
+ 
 
 
 
