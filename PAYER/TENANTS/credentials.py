@@ -19,34 +19,21 @@ TOKEN_URL = config('TOKEN_URL')
 def generate_access_token():
     # Make the request to the token URL using client credentials
     auth = HTTPBasicAuth(settings.API_KEY, settings.API_SECRET)
-    data = {'grant_type': 'client_credentials'}  # Include the grant_type parameter
     print("Token URL:", settings.TOKEN_URL)
-    try:
-        response = requests.post(
+
+    res = requests.get(
             settings.TOKEN_URL,
-            auth=auth,
-            data=data
+            auth=auth
+         
         )
-        print("After requests.post")
-        response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
+    print("After requests.post")
+    res.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
 
-        access_token = response.json().get("access_token")
-        print("Token URL Response:", response.text)
+    json_response = res.json()
+    acess_token = json_response["access_token"]
+    return acess_token
         
-        # Print the access token
-        print("Access Token:", access_token)
-
-        return access_token
-
-    except requests.exceptions.RequestException as e:
-        # Log the error for debugging
-        print(f"Error during token generation: {str(e)}")
-        return None
-
-    except ValueError as e:
-        # Log the error for debugging
-        print(f"Error decoding JSON during token generation: {str(e)}")
-        return None
+       
 
  
 
