@@ -31,6 +31,7 @@ def generate_access_token():
 
     json_response = res.json()
     acess_token = json_response["access_token"]
+    print(f"Generated access token: {acess_token}")
     return acess_token
         
        
