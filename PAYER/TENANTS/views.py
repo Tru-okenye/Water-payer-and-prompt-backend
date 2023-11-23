@@ -80,10 +80,11 @@ def initiate_payment(request, tenant_id):
     print("Before generate_access_token")
     access_token = generate_access_token()
     print("After generate_access_token")
+    password = generate_password()
 
     request = {
         'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
-        'Password': generate_password(settings.API_KEY, settings.API_SECRET, reference_id),
+        'Password': password,
         'Timestamp': generate_timestamp(),
         'TransactionType': 'CustomerPayBillOnline',
         'Amount': formatted_amount,

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Load values from environment variables
 API_KEY = config('API_KEY')
 API_SECRET = config('API_SECRET')
-
+PASS_KEY = config('PASS_KEY')
 
 
 
@@ -55,10 +55,10 @@ def generate_access_token():
 
 
 
-def generate_password(API_KEY, API_SECRET, refrence_id):
+def generate_password():
     # Generate password
     timestamp = generate_timestamp()
-    data = API_KEY + API_SECRET + timestamp + refrence_id
+    data = API_KEY + API_SECRET + timestamp + PASS_KEY 
     password = base64.b64encode(hashlib.sha256(data.encode()).digest()).decode('utf-8')
 
     print(f"Generated Password: {password}") 
