@@ -21,7 +21,7 @@ def generate_access_token():
     auth = HTTPBasicAuth(settings.API_KEY, settings.API_SECRET)
     print("Token URL:", settings.TOKEN_URL)
 
-    res = requests.get(
+    res = requests.post(
             settings.TOKEN_URL,
             auth=auth
          
