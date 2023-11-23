@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 from django.shortcuts import get_object_or_404
-from .credentials import MpesaAccessToken, generate_password, generate_timestamp
+from .credentials import generate_access_token, generate_password, generate_timestamp
 from django.conf import settings
 
 # tenants records 
@@ -76,7 +76,7 @@ def initiate_payment(request, tenant_id):
     phone_number = tenant.phone_number
     reference_id = f"PAYMENT_{tenant.id}"
     formatted_amount = int(tenant.amount_due * 100)  # convert to cents
-    access_token = MpesaAccessToken.validated_access_token
+    access_token = generate_access_token()
 
     request = {
         'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
@@ -135,7 +135,7 @@ def check_payment_status(request, tenant_id):
         }
 
         headers = {
-            "Authorization": "Bearer " + MpesaAccessToken(api_key, api_secret),
+            "Authorization": "Bearer " + generate_access_token(api_key, api_secret),
             "Content-Type": "application/json"
         }
 

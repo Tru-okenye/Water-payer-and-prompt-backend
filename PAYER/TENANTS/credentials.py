@@ -15,11 +15,30 @@ API_KEY = config('API_KEY')
 API_SECRET = config('API_SECRET')
 TOKEN_URL = config('TOKEN_URL')
 
-class MpesaAccessToken:
-    t = requests.get(TOKEN_URL,
-                     auth=HTTPBasicAuth(API_KEY,  API_SECRET))
-    access_token = json.loads(t.text)
-    validated_access_token = access_token["access_token"]
+def generate_access_token():
+    # Make the request to the token URL using client credentials
+    auth = HTTPBasicAuth(API_KEY, API_SECRET)
+    
+    try:
+        response = requests.get(
+            TOKEN_URL,
+            auth=auth
+        )
+        response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
+
+        access_token = response.json().get("access_token")
+        print("Token URL Response:", response.text)
+        return access_token
+
+    except requests.exceptions.RequestException as e:
+        # Log the error for debugging
+        print(f"Error during token generation: {str(e)}")
+        return None
+
+    except ValueError as e:
+        # Log the error for debugging
+        print(f"Error decoding JSON during token generation: {str(e)}")
+        return None
 
 
 
