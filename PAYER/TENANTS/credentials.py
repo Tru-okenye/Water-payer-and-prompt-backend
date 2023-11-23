@@ -15,18 +15,13 @@ API_KEY = config('API_KEY')
 API_SECRET = config('API_SECRET')
 TOKEN_URL = config('TOKEN_URL')
 
-def generate_access_token():
-    # Load API keys from the environment file
-    api_key = config('API_KEY')
-    api_secret = config('API_SECRET')
-    token_url = config('TOKEN_URL')
-
+def generate_access_token(request):
     # Make the request to the token URL using client credentials
-    auth = HTTPBasicAuth(api_key, api_secret)
+    auth = HTTPBasicAuth(API_KEY, API_SECRET)
     
     try:
         response = requests.get(
-            token_url,
+            TOKEN_URL,
             auth=auth
         )
         response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
