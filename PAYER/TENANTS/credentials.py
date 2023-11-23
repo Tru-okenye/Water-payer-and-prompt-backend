@@ -17,24 +17,31 @@ TOKEN_URL = config('TOKEN_URL')
 
 
 def generate_access_token():
-    auth = HTTPBasicAuth(API_KEY, API_SECRET)
-    
-    try:
-        print("Token URL:", TOKEN_URL)  # Add this line for debugging
-        response = requests.POST(TOKEN_URL, auth=auth)
-        response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
+    # Load API keys from the environment file
+    api_key = config('API_KEY')
+    api_secret = config('API_SECRET')
+    token_url = config('TOKEN_URL')
 
-        access_token = response.json().get("access_token")
+    # Set up the data for the token request
+    data = {
+        'grant_type': 'client_credentials',
+    }
+
+    # Make the request to the token URL using client credentials
+    response = requests.post(
+        token_url,
+        auth=HTTPBasicAuth(api_key, api_secret),
+        data=data
+    )
+
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the JSON response and extract the access token
+        access_token = response.json().get('access_token')
         return access_token
-
-    except requests.exceptions.RequestException as e:
-        # Log the error for debugging
-        logger.error(f"Error during token generation: {str(e)}")
-        return None
-
-    except json.JSONDecodeError as e:
-        # Log the error for debugging
-        logger.error(f"Error decoding JSON during token generation: {str(e)}")
+    else:
+        # If the request was not successful, print an error message
+        print(f"Error generating access token: {response.status_code} - {response.text}")
         return None
 
 

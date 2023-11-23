@@ -82,7 +82,7 @@ def initiate_payment(request, tenant_id):
         'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
         'Password': generate_password(settings.API_KEY, settings.API_SECRET, reference_id),
         'Timestamp': generate_timestamp(),
-        'TransactionType': 'CustomerBuyGoodsOnline',
+        'TransactionType': 'CustomerPayBillOnline',
         'Amount': formatted_amount,
         'PartyA': phone_number,
         'PartyB': settings.BUSINESS_SHORT_CODE,
