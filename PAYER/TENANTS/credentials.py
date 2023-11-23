@@ -21,7 +21,7 @@ def generate_access_token():
     
     try:
         print("Token URL:", TOKEN_URL)  # Add this line for debugging
-        response = requests.get(TOKEN_URL, auth=auth)
+        response = requests.POST(TOKEN_URL, auth=auth)
         response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
 
         access_token = response.json().get("access_token")
