@@ -20,7 +20,7 @@ def generate_access_token():
     auth = HTTPBasicAuth(API_KEY, API_SECRET)
     
     try:
-        response = requests.get(
+        response = requests.post(
             TOKEN_URL,
             auth=auth
         )
