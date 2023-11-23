@@ -23,12 +23,11 @@ def generate_access_token():
     print("Token URL:", settings.TOKEN_URL)
 
     try:
-        res = requests.post(
+        res = requests.get(
             settings.TOKEN_URL,
-            auth=auth,
-            data={'grant_type': 'client_credentials'}
+            auth=auth
         )
-        print("After requests.post")
+        print("After requests.get")
         res.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
 
         json_response = res.json()
@@ -45,6 +44,7 @@ def generate_access_token():
         # Log the error for debugging
         print(f"Error decoding JSON during token generation: {str(e)}")
         return None
+
 
         
        
