@@ -15,7 +15,7 @@ API_KEY = config('API_KEY')
 API_SECRET = config('API_SECRET')
 TOKEN_URL = config('TOKEN_URL')
 
-def generate_access_token(request):
+def generate_access_token():
     # Make the request to the token URL using client credentials
     auth = HTTPBasicAuth(API_KEY, API_SECRET)
     
@@ -27,6 +27,7 @@ def generate_access_token(request):
         response.raise_for_status()  # Raise an exception for bad responses (4xx or 5xx)
 
         access_token = response.json().get("access_token")
+        print("Token URL Response:", response.text)
         return access_token
 
     except requests.exceptions.RequestException as e:

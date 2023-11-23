@@ -99,6 +99,8 @@ def initiate_payment(request, tenant_id):
     
     try:
         response = requests.post(url, json=request, headers=headers)
+        print("Request Payload:", request)
+        print("Response Status Code:", response.status_code)
         if response.status_code == 200:
             print(f"API Key: {settings.API_KEY}")
             print(f"API Secret: {settings.API_SECRET}")
