@@ -93,7 +93,7 @@ def initiate_payment(request, tenant_id):
         'PartyA': phone_number,
         'PartyB': settings.BUSINESS_SHORT_CODE,
         'PhoneNumber': phone_number,
-        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',  # Update this URL
+        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',  
         'AccountReference': reference_id,
         'TransactionDesc': 'Water Bill Payment'
     }
