@@ -72,7 +72,7 @@ def authenticated_tenant_details(request, tenant_id):
 
 # payment handling 
 
-@csrf_exempt
+
 def initiate_payment(request, tenant_id):
     url = settings.ENDPOINT
     tenant = get_object_or_404(Tenant, pk=tenant_id)
