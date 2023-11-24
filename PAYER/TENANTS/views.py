@@ -116,32 +116,7 @@ def initiate_payment(request, tenant_id):
             print(f"Token Response: {response.json()}")
             print(f"Amount: {formatted_amount}")
 
-            stk_data = response.json()
-            response_code = stk_data.get('ResponseCode')
-            payment_transaction = PaymentTransaction.objects.create(
-                tenant_id=tenant.id,
-                checkout_request_id=stk_data.get('CheckoutRequestID'),
-               
-            )
-            
-            print(f"Checkout Request ID: {stk_data.get('CheckoutRequestID')}")
-
-            if response_code == '0':
-                # STK push was successful, respond with success and the CheckoutRequestID
-                response_data = {
-                     "status": "success",
-                     "checkoutRequestID": stk_data['CheckoutRequestID'],
-                     "payment_transaction_id": payment_transaction.id, 
-                     "created_at": payment_transaction.created_at
-                }
-                return JsonResponse(response_data)
-            
-            else:
-                # STK push failed, respond with error message and the ResponseDescription
-                return JsonResponse({"status": "error", "error": stk_data['ResponseDescription']})
-        elif response.status_code == 400 or response.status_code == 500:
-            stk_data = response.json()
-            return JsonResponse({"status": "error", "error": stk_data})
+          
         else:
             return JsonResponse({"status": "error", "error": f"Invalid response {response.text} received."})
 
@@ -150,59 +125,3 @@ def initiate_payment(request, tenant_id):
         response_data = {"status": "error", "error": f"Failed to initiate payment: {str(e)}"}
         return JsonResponse(response_data, status=500)
     
-@csrf_exempt    
-def check_payment_status(request, checkout_request_id):
-    try:
-        url = settings.QUERY
-        timestamp = generate_timestamp()
-        business_short_code = settings.MPESA_SHORTCODE
-        password = generate_password()
-
-        payload = {
-            "BusinessShortCode": business_short_code,
-            "Password": password,
-            "Timestamp": timestamp,
-            "CheckoutRequestID": checkout_request_id
-        }
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + generate_access_token() 
-        }
-
-        response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()  # Raises HTTPError for bad responses
-
-        # Handle the response from Safaricom
-        data = response.json()
-        result_code = data.get("ResultCode")
-
-        if result_code == 0:  # Success
-            tenant_id = int(checkout_request_id.split("_")[1])
-            tenant = Tenant.objects.get(id=tenant_id)
-            tenant.is_paid = True
-            tenant.save()
-            return JsonResponse({"status": "success", "data": data})
-        else:
-            return JsonResponse({"status": "error", "data": data})
-
-    except HTTPError as e:
-        # Handle HTTP errors
-        response_data = {"status": "error", "data": f"HTTP error: {str(e)}"}
-        return JsonResponse(response_data, status=response.status_code)
-    except RequestException as e:
-        # Handle other request exceptions
-        response_data = {"status": "error", "data": f"Request error: {str(e)}"}
-        return JsonResponse(response_data, status=500)
-    
-@api_view(['GET'])
-def get_payment_transactions(request):
-    # Retrieve all payment transactions from the database
-    transactions = PaymentTransaction.objects.all()
-
-    # Serialize the queryset using the serializer
-    serializer = PaymentTransactionSerializer(transactions, many=True)
-
-    # Return the serialized data as JSON response
-    return Response(serializer.data)
-
