@@ -72,7 +72,7 @@ def authenticated_tenant_details(request, tenant_id):
 
 # payment handling 
 
-
+@csrf_exempt
 def initiate_payment(request, tenant_id):
     url = settings.ENDPOINT
     tenant = get_object_or_404(Tenant, pk=tenant_id)
@@ -150,12 +150,12 @@ def initiate_payment(request, tenant_id):
         response_data = {"status": "error", "error": f"Failed to initiate payment: {str(e)}"}
         return JsonResponse(response_data, status=500)
     
+@csrf_exempt    
 def check_payment_status(request, checkout_request_id):
     try:
         url = settings.QUERY
         timestamp = generate_timestamp()
         business_short_code = settings.MPESA_SHORTCODE
-        pass_key = settings.MPESA_PASSKEY
         password = generate_password()
 
         payload = {
@@ -194,6 +194,7 @@ def check_payment_status(request, checkout_request_id):
         # Handle other request exceptions
         response_data = {"status": "error", "data": f"Request error: {str(e)}"}
         return JsonResponse(response_data, status=500)
+    
 @api_view(['GET'])
 def get_payment_transactions(request):
     # Retrieve all payment transactions from the database
