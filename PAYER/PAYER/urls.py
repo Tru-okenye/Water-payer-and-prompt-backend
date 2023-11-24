@@ -13,6 +13,4 @@ urlpatterns = [
     path('api/authenticated-tenant-details/<int:tenant_id>/', authenticated_tenant_details, name='authenticated-tenant-details'),
     path('api/authenticated-tenant-details/<int:tenant_id>/initiate-payment/', initiate_payment, name='initiate-payment'),
     path('api/tenants/<int:tenant_id>/check-payment-status/', check_payment_status, name='check-payment-status'),
-    
-    
 ]
