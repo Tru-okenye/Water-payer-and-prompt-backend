@@ -121,7 +121,7 @@ def initiate_payment(request, tenant_id):
             payment_transaction = PaymentTransaction.objects.create(
                 tenant_id=tenant.id,
                 checkout_request_id=stk_data.get('CheckoutRequestID'),
-                # Other fields you may want to save
+               
             )
             
             print(f"Checkout Request ID: {stk_data.get('CheckoutRequestID')}")
