@@ -72,19 +72,19 @@ def authenticated_tenant_details(request, tenant_id):
 
 # payment handling 
 
-
+@csrf_exempt
+@api_view(['POST'])
 def initiate_payment(request, tenant_id):
     url = settings.ENDPOINT
     tenant = get_object_or_404(Tenant, pk=tenant_id)
     phone_number = tenant.phone_number
     reference_id = f"PAYMENT_{tenant.id}"
     formatted_amount = int(tenant.amount_due * 100)  # convert to cents
-    print("Before generate_access_token")
+
     access_token = generate_access_token()
-    print("After generate_access_token")
     password = generate_password()
 
-    request = {
+    payload = {
         'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
         'Password': password,
         'Timestamp': generate_timestamp(),
@@ -93,7 +93,7 @@ def initiate_payment(request, tenant_id):
         'PartyA': phone_number,
         'PartyB': settings.BUSINESS_SHORT_CODE,
         'PhoneNumber': phone_number,
-        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/check-payment-status/',
+        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',  # Update this URL
         'AccountReference': reference_id,
         'TransactionDesc': 'Water Bill Payment'
     }
@@ -102,26 +102,68 @@ def initiate_payment(request, tenant_id):
         "Content-Type": "application/json",
         "Authorization": "Bearer " + access_token
     }
-    
+
     try:
-        response = requests.post(url, json=request, headers=headers)
-        print("Request Payload:", request)
+        response = requests.post(url, json=payload, headers=headers)
+        print("Request Payload:", payload)
         print("Response Status Code:", response.status_code)
         print("Response Text:", response.text)
 
         if response.status_code == 200:
-            print(f"API Key: {settings.API_KEY}")
-            print(f"API Secret: {settings.API_SECRET}")
-            print(f"Access Token: {access_token}")
-            print(f"Token Response: {response.json()}")
-            print(f"Amount: {formatted_amount}")
+            response_data = response.json()
 
-          
+            # Extract the information needed for STK push from the response
+            merchant_request_id = response_data.get('MerchantRequestID')
+            checkout_request_id = response_data.get('CheckoutRequestID')
+
+            # Return the information to your React frontend
+            return Response({
+                'status': 'success',
+                'message': 'Payment initiation successful',
+                'merchant_request_id': merchant_request_id,
+                'checkout_request_id': checkout_request_id,
+            })
+
         else:
-            return JsonResponse({"status": "error", "error": f"Invalid response {response.text} received."})
+            # Handle other status codes or provide more specific error messages
+            return Response({"status": "error", "error": f"Invalid response {response.text}"}, status=response.status_code)
 
-    except requests.exceptions.RequestException as e:
-        # Handle any exceptions or errors here
+    except HTTPError as e:
+        # Handle HTTP errors
+        response_data = {"status": "error", "error": f"HTTP error: {str(e)}"}
+        return Response(response_data, status=500)
+
+    except RequestException as e:
+        # Handle other request exceptions
         response_data = {"status": "error", "error": f"Failed to initiate payment: {str(e)}"}
-        return JsonResponse(response_data, status=500)
+        return Response(response_data, status=500)
     
+@csrf_exempt
+@api_view(['POST'])
+def payment_callback(request):
+    if request.method == 'POST':
+        try:
+            # Extract relevant information from the callback
+            data = json.loads(request.body.decode('utf-8'))
+            result_code = data.get('ResultCode')
+            result_desc = data.get('ResultDesc')
+            merchant_request_id = data.get('MerchantRequestID')
+            checkout_request_id = data.get('CheckoutRequestID')
+
+            # Process the payment response
+            if result_code == '0':
+                # Payment was successful, update your database or perform any other necessary actions
+                # For example, update PaymentTransaction model with the payment details
+                # payment_transaction = PaymentTransaction.objects.get(merchant_request_id=merchant_request_id)
+                # payment_transaction.status = 'success'
+                # payment_transaction.save()
+
+                return Response({'status': 'success', 'message': 'Payment successful'})
+            else:
+                # Payment failed, handle accordingly
+                return Response({'status': 'error', 'message': f'Payment failed: {result_desc}'})
+
+        except json.JSONDecodeError as e:
+            return Response({'status': 'error', 'message': 'Invalid JSON data in the callback'}, status=400)
+
+    return Response({'status': 'error', 'message': 'Invalid request method'}, status=405)
