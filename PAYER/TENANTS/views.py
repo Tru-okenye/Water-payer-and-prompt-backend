@@ -140,9 +140,9 @@ def initiate_payment(request, tenant_id):
         return Response(response_data, status=500)
     
 @csrf_exempt
-@api_view(['POST'])
+@api_view(['GET'])
 def payment_callback(request):
-    if request.method == 'POST':
+    if request.method == 'GET':
         try:
             # Extract relevant information from the callback
             data = json.loads(request.body.decode('utf-8'))
