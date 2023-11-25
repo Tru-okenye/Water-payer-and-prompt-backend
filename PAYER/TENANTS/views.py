@@ -73,7 +73,7 @@ def authenticated_tenant_details(request, tenant_id):
 # payment handling 
 
 @csrf_exempt
-@api_view(['POST'])
+@api_view(['GET'])
 def initiate_payment(request, tenant_id):
     print(f"Received request with tenant_id: {tenant_id}")
     url = settings.ENDPOINT
