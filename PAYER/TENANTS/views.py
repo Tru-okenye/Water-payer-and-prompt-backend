@@ -145,6 +145,7 @@ def payment_callback(request):
     if request.method == 'GET':
         try:
             # Extract relevant information from the callback
+            url = settings.QUERY
             data = json.loads(request.body.decode('utf-8'))
             result_code = data.get('ResultCode')
             result_desc = data.get('ResultDesc')
