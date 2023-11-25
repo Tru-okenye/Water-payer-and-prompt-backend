@@ -75,6 +75,7 @@ def authenticated_tenant_details(request, tenant_id):
 @csrf_exempt
 @api_view(['POST'])
 def initiate_payment(request, tenant_id):
+    print(f"Received request with tenant_id: {tenant_id}")
     url = settings.ENDPOINT
     tenant = get_object_or_404(Tenant, pk=tenant_id)
     phone_number = tenant.phone_number
