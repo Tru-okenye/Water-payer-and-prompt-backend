@@ -5,12 +5,15 @@ from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Tenant, PaymentTransaction
-from .serializers import TenantSerializer, PaymentTransactionSerializer
+from .serializers import TenantSerializer
 from django.http import JsonResponse
 import requests
 from requests.auth import HTTPBasicAuth
 from django.views.decorators.csrf import csrf_exempt
 from requests.exceptions import RequestException, HTTPError
+from django.utils import timezone
+from datetime import timedelta
+
 
 import json
 
@@ -60,7 +63,10 @@ def authenticated_tenant_details(request, tenant_id):
                 'name': tenant.name,
                 'phone_number': tenant.phone_number,
                 'amount_due': tenant.amount_due,
-               
+                'house_number':tenant.house_number,
+                'tenant_id': tenant.tenant_id,
+                'is_paid': tenant.is_paid,
+                'due_date':tenant.due_date, 
             }
 
             return JsonResponse(data)
@@ -71,62 +77,73 @@ def authenticated_tenant_details(request, tenant_id):
 
 
 # payment handling 
-
-@csrf_exempt
 @api_view(['POST'])
-def initiate_payment(request, tenant_id):
+def initiate_stk(request, tenant_id):
+    #     # Get the API endpoint from settings
+    ENDPOINT = 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
+    
     print(f"Received request with tenant_id: {tenant_id}")
-    url = settings.ENDPOINT
-    tenant = get_object_or_404(Tenant, pk=tenant_id)
+    tenant = Tenant.objects.get(tenant_id=tenant_id)
     phone_number = tenant.phone_number
     reference_id = f"PAYMENT_{tenant.id}"
     formatted_amount = int(tenant.amount_due * 100)  # convert to cents
-
+    # Generate access token and password for authentication
     access_token = generate_access_token()
     password = generate_password()
-
+    print(f"Password: {password}")
+#     # Prepare payload for the Safaricom API request
     payload = {
         'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
         'Password': password,
         'Timestamp': generate_timestamp(),
-        'TransactionType': 'CustomerPayBillOnline',
+        'TransactionType': 'CustomerBuyGoodsOnline',
         'Amount': formatted_amount,
         'PartyA': phone_number,
-        'PartyB': settings.BUSINESS_SHORT_CODE,
+        'PartyB': '8676510',
         'PhoneNumber': phone_number,
-        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',  
+        'CallBackURL': 'https://water-payer-37119e2b1a5e.herokuapp.com/api/payment-callback/',
         'AccountReference': reference_id,
-        'TransactionDesc': 'Water Bill Payment'
+        'TransactionDesc': 'Water Bill Payment',
     }
-
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + access_token
     }
+    print("Request Headers:", headers)
 
     try:
-        response = requests.post(url, json=payload, headers=headers)
+        print("Before the request to Safaricom API")
+        # Send the request to the Safaricom API
+        response = requests.post(ENDPOINT, json=payload, headers=headers)
+        print("After the request to Safaricom API")
+        # Log request details
         print("Request Payload:", payload)
         print("Response Status Code:", response.status_code)
         print("Response Text:", response.text)
 
         if response.status_code == 200:
+            # If the response status code is 200, extract information from the response
             response_data = response.json()
 
             # Extract the information needed for STK push from the response
             merchant_request_id = response_data.get('MerchantRequestID')
             checkout_request_id = response_data.get('CheckoutRequestID')
+            # Save checkout_request_id in the Tenant model
+            tenant.checkout_request_id = checkout_request_id
+            tenant.save()
 
-            # Return the information to your React frontend
+            # Return success response to your React frontend
             return Response({
                 'status': 'success',
                 'message': 'Payment initiation successful',
                 'merchant_request_id': merchant_request_id,
-                'checkout_request_id': checkout_request_id,
+                'checkoutRequestID': checkout_request_id,
             })
 
+
+
         else:
-            # Handle other status codes or provide more specific error messages
+            # If the response status code is not 200, handle the error
             return Response({"status": "error", "error": f"Invalid response {response.text}"}, status=response.status_code)
 
     except HTTPError as e:
@@ -138,36 +155,85 @@ def initiate_payment(request, tenant_id):
         # Handle other request exceptions
         response_data = {"status": "error", "error": f"Failed to initiate payment: {str(e)}"}
         return Response(response_data, status=500)
-    
-@csrf_exempt
-@api_view(['GET'])
+
+
+
+@api_view(['POST'])
 def payment_callback(request):
-    if request.method == 'GET':
-        try:
-            # Extract relevant information from the callback
-            url = settings.QUERY
-            data = json.loads(request.body.decode('utf-8'))
-            result_code = data.get('ResultCode')
-            result_desc = data.get('ResultDesc')
-            merchant_request_id = data.get('MerchantRequestID')
-            checkout_request_id = data.get('CheckoutRequestID')
+    # Get the API endpoint for STK push query from settings
+    QUERY_ENDPOINT = 'https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query'
+    
+    data = json.loads(request.body.decode('utf-8'))
 
-            # Process the payment response
+    # Get the associated Tenant and checkout_request_id
+   
+    checkout_request_id = data.get('checkoutRequestID')
+    
+    # Generate access token for authentication
+    access_token = generate_access_token()
+
+    # Prepare payload for the Safaricom API request
+    payload = {
+        'BusinessShortCode': settings.BUSINESS_SHORT_CODE,
+        'Password': generate_password(),
+        'Timestamp': generate_timestamp(),
+        'CheckoutRequestID': checkout_request_id,
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + access_token
+    }
+
+    try:
+        # Send the request to the Safaricom API for STK push query
+        response = requests.post(QUERY_ENDPOINT, json=payload, headers=headers)
+        
+        # Log request details
+        print("STK Query Request Payload:", payload)
+        print("STK Query Response Status Code:", response.status_code)
+        print("STK Query Response Text:", response.text)
+
+        if response.status_code == 200:
+            # If the response status code is 200, extract information from the response
+            response_data = response.json()
+
+            # Extract the result code and result description from the response
+            result_code = response_data.get('ResultCode')
+            result_description = response_data.get('ResultDesc')
+         # Check if the payment was successful (ResultCode is '0')
             if result_code == '0':
-                # Payment was successful, update your database or perform any other necessary actions
-                # For example, update PaymentTransaction model with the payment details
-                # payment_transaction = PaymentTransaction.objects.get(merchant_request_id=merchant_request_id)
-                # payment_transaction.status = 'success'
-                # payment_transaction.save()
+                # Update the Tenant's is_paid field to True
+                try:
+                    print(f"Attempting to update tenant with checkout_request_id: {checkout_request_id}")
+                    tenant = Tenant.objects.get(checkout_request_id=checkout_request_id)
+                    tenant.is_paid = True
+                    tenant.due_date = timezone.now() + timedelta(days=30)
+                    tenant.save()
+                    print("Update successful")
+                except Tenant.DoesNotExist:
+                    print("Tenant not found.")
+                except Exception as e:
+                    print(f"An error occurred: {str(e)}")
 
-                return Response({'status': 'success', 'message': 'Payment successful'})
-            else:
-                # Payment failed, handle accordingly
-                return Response({'status': 'error', 'message': f'Payment failed: {result_desc}'})
+            # # Return the result code and result description to your React frontend
+            return Response({
+                'status': 'success',
+                'message': 'STK push query successful',
+                'ResultCode': result_code,
+                'ResultDesc': result_description,
+            })
 
-        except json.JSONDecodeError as e:
-            return Response({'status': 'error', 'message': 'Invalid JSON data in the callback'}, status=400)
+        else:
+            # If the response status code is not 200, handle the error
+            return Response({"status": "error", "errorMessage": f"Invalid response {response.text}"}, status=response.status_code)
 
-    return Response({'status': 'error', 'message': 'Invalid request method'}, status=405)
+    except HTTPError as e:
+        # Handle HTTP errors
+        response_data = {"status": "error", "errorMessage": f"HTTP error: {str(e)}"}
+        return Response(response_data, status=500)
 
-
+    except RequestException as e:
+        # Handle other request exceptions
+        response_data = {"status": "error", "erroMessage": f"Failed to query STK push status: {str(e)}"}
+        return Response(response_data, status=500)

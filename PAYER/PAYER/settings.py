@@ -35,7 +35,7 @@ STATIC_ROOT = 'staticfiles'
 SECRET_KEY = 'django-insecure-tx5v84$1^th_3wf3d*dmm&81)6=!wakqrb1&m7-d96vx+7+ani'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -81,7 +81,6 @@ MIDDLEWARE = [
 
 
 
-
 ROOT_URLCONF = 'PAYER.urls'
 
 TEMPLATES = [
@@ -118,18 +117,18 @@ WSGI_APPLICATION = 'PAYER.wsgi.application'
 #     }
 # }
 
-DATABASES = {'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))}
+# DATABASES = {'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))}
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'waterpayer', 
-#         'USER': 'postgres',
-#         'PASSWORD': '@Truphy1.',  
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'waterpayer', 
+        'USER': 'postgres',
+        'PASSWORD': '@Truphy1.',  
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
